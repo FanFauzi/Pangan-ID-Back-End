@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  produsen
+  konsumen
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  done
+  delivered
+  canceled
+}
+
+enum TransactionType {
+  income
+  expense
+}
+
+model User {
+  id          Int             @id @default(autoincrement())
+  username    String
+  email       String
+  password    String
+  role        Role
+  addres      String
+  created_at  DateTime?       @default(now())
+
+  // relasi
+  products            Product[]
+  orders              Order[]       @relation("BuyerOrders")
+  notifications       Notificartion[]
+  income_expenses     IncomeExpenses[]
+  saved_products      SavedProduct[]
+  cart                Cart?
+  delivery_addresses  DeliveryAddress[]
+  product_reviews     ProductReview[]
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [user_id], references: [id])
+  user_id     Int
+  name        String?
+  description String?
+  price       Decimal?
+  stock       Int?
+  image_url   String?
+  created_at  DateTime? @default(now())
+
+  // relasi
+  order_items   OrderItem[]
+  saved_by      SavedProduct[]
+  in_carts      CartItem[]
+  reviews       ProductReview[]
+}
+
+model Order {
+  id          Int          @id @default(autoincrement())
+  buyer       User?        @relation("BuyerOrders", fields: [buyer_id], references: [id])
+  buyer_id    Int?
+  total_price Decimal?
+  status      OrderStatus?
+  created_at  DateTime?    @default(now())
+
+  items       OrderItem[]
+  status_logs OrderStatusHistory[]
+}
+
+model OrderItem {
+  id         Int     @id @default(autoincrement())
+  order      Order   @relation(fields: [order_id], references: [id])
+  order_id   Int
+  product    Product @relation(fields: [product_id], references: [id])
+  product_id Int
+  quantity   Int
+  price      Decimal
+}
+
+model Notificartion {
+  id         Int     @id @default(autoincrement())
+  user       User    @relation(fields: [user_id], references: [id])
+  user_id    Int
+  message    String?
+  is_read    Boolean?
+  created_at DateTime @default(now())
+}
+
+model IncomeExpenses {
+  id          Int              @id @default(autoincrement())
+  user        User             @relation(fields: [user_id], references: [id])
+  user_id     Int
+  type        TransactionType
+  amount      Decimal
+  description String?
+  created_at  DateTime @default(now())
+}
+
+model SavedProduct {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [user_id], references: [id])
+  user_id      Int
+  product      Product  @relation(fields: [product_id], references: [id])
+  product_id   Int
+  saved_at     DateTime @default(now())
+
+  @@unique([user_id, product_id])
+}
+
+model Cart {
+  id         Int       @id @default(autoincrement())
+  user       User      @relation(fields: [user_id], references: [id])
+  user_id    Int
+  created_at DateTime  @default(now())
+
+  items      CartItem[]
+
+  @@unique([user_id])
+}
+
+model CartItem {
+  id         Int       @id @default(autoincrement())
+  cart       Cart      @relation(fields: [cart_id], references: [id])
+  cart_id    Int
+  product    Product   @relation(fields: [product_id], references: [id])
+  product_id Int
+  quantity   Int
+  added_at   DateTime  @default(now())
+}
+
+model DeliveryAddress {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [user_id], references: [id])
+  user_id        Int
+  label          String?
+  recipient_name String?
+  phone          String?
+  full_address   String?
+  city           String?
+  postal_code    String?
+  is_default     Boolean  @default(false)
+}
+
+model ProductReview {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  product    Product  @relation(fields: [product_id], references: [id])
+  product_id Int
+  rating     Int
+  review     String?
+  created_at DateTime @default(now())
+}
+
+model OrderStatusHistory {
+  id         Int         @id @default(autoincrement())
+  order      Order       @relation(fields: [order_id], references: [id])
+  order_id   Int
+  status     OrderStatus
+  updated_at DateTime    @default(now())
+}
