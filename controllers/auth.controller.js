@@ -15,9 +15,6 @@ const login = async (req, res) => {
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) return res.status(401).json({ message: 'Password salah' });
 
-  console.log("JWT_SECRET =", process.env.JWT_SECRET);
-
-
   const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
     expiresIn: '1d',
   });
