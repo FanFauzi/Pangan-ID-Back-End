@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.routes.js';
 import productsRoutes from './routes/products.routes.js';
 import checkoutRoutes from './routes/checkout.routes.js';
 import orderRoutes from './routes/order.routes.js';
+import priceRoutes from './routes/price.routes.js';
+import pihpsRoutes from './routes/pihps.routes.js';
 
 
 const app = express();
@@ -24,6 +26,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/produk', productsRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api', priceRoutes);
+app.use('/api', pihpsRoutes);
 
 
 const PORT = process.env.PORT || 5000;
