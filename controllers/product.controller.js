@@ -71,28 +71,28 @@ const putProduct = async (req, res) => {
       return res.status(404).json({ message: 'Produk tidak ditemukan' });
     }
     let imagePath = product.image_url; // gambar lama
-    console.log(3 ,'backend', req.body);
-    console.log(1 ,'backend', imagePath);
+    console.log(3, 'backend', req.body);
+    console.log(1, 'backend', imagePath);
 
     if (req.file) {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
       const maxZise = 2 * 1024 * 1024; // 2MB
 
       // Validasi tipe dan ukuran
-      if(!allowedTypes.includes(req.file.mimetype)) {
+      if (!allowedTypes.includes(req.file.mimetype)) {
         return res.status(400).json({ message: 'Tipe file tidak diizinkan' });
       }
 
-      if(req.file.size > maxZise) {
+      if (req.file.size > maxZise) {
         return res.status(400).json({ message: 'Ukuran file terlalu besar' });
       }
 
-      if(product.image_url) {
+      if (product.image_url) {
         const oldImageName = path.basename(product.image_url);
         const oldImagePath = path.join(process.cwd(), 'uploads', oldImageName);
-        
+
         fs.unlink(oldImagePath, (err) => {
-          if(err) console.warn('Gagal menghapus gambar lama:', err.message);
+          if (err) console.warn('Gagal menghapus gambar lama:', err.message);
           else console.log('Gambar lama berhasil dihapus', oldImagePath);
         });
       }
@@ -100,7 +100,7 @@ const putProduct = async (req, res) => {
       imagePath = `/uploads/${req.file.filename}`;
     }
 
-    console.log(2 ,'backend', imagePath);
+    console.log(2, 'backend', imagePath);
     // Update data
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
@@ -119,5 +119,38 @@ const putProduct = async (req, res) => {
     res.status(500).json({ message: 'Terjadi kesalahan saat mengubah produk' });
   }
 }
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    const userId = req.user.id;
+
+    const product = await prisma.product.findFirst({
+      where: { id: productId, user_id: userId },
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Produk tidak ditemukan' });
+    }
+
+    // Hapus file gambar dari server jika ada
+    if (product.image_url) {
+      const imagePath = path.join(process.cwd(), 'public', product.image_url);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Hapus dari database
+    await prisma.product.delete({
+      where: { id: productId },
+    });
+
+    res.json({ message: 'Produk berhasil dihapus' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Gagal menghapus produk' });
+  }
+};
 
 export { addProduct, getAllProducts, getProductById, putProduct };

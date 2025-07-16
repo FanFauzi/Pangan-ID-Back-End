@@ -29,3 +29,12 @@ export const verifyToken = (req, res, next) => {
     return res.status(403).json({ message: 'Token tidak valid' });
   }
 };
+
+export const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Akses ditolak: tidak memiliki hak akses' });
+    }
+    next();
+  };
+};

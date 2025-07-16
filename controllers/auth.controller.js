@@ -5,7 +5,6 @@ import { PrismaClient } from '../generated/prisma/index.js'; // atau sesuaikan p
 
 const prisma = new PrismaClient();
 
-
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -15,12 +14,20 @@ const login = async (req, res) => {
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) return res.status(401).json({ message: 'Password salah' });
 
-  const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: '1d',
-  });
+  // ✅ Tambahkan role ke dalam token
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role, // tambahkan role ke payload
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '1d' }
+  );
 
-  res.json({ message: 'Login berhasil', token });
+  res.json({ message: 'Login berhasil', token, user: {  role: user.role } });
 };
+
 
 const register = async (req, res) => {
   const { username, email, password, role, addres } = req.body;
@@ -53,13 +60,13 @@ const register = async (req, res) => {
   }
 };
 
-const getProfile = async (req, res) => {
-  const userId = req.user.id; // Dapat dari JWT
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+// const getProfile = async (req, res) => {
+//   const userId = req.user.id; // Dapat dari JWT
+//   const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  if (!user) return res.status(404).json({ message: 'User tidak ditemukan' });
+//   if (!user) return res.status(404).json({ message: 'User tidak ditemukan' });
 
-  res.json({ user });
-};
+//   res.json({ user });
+// };
 
-export { login, register, getProfile };
+export { login, register };
